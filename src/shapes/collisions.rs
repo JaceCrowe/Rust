@@ -1,0 +1,48 @@
+pub struct PointIter {
+    points: Vec<(f64, f64)>,
+    idx: usize,
+}
+
+//consumes the vector
+impl From<Vec<(f64, f64)>> for PointIter {
+    fn from(value: Vec<(f64, f64)>) -> Self {
+        return PointIter {
+            points: value,
+            idx: 0,
+        };
+    }
+}
+
+impl Iterator for PointIter {
+    type Item = (f64, f64);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.idx >= self.points.len() {
+            return None;
+        }
+
+        let point = self.points[self.idx];
+        self.idx += 1;
+
+        return Some(point);
+    }
+}
+
+pub trait Points {
+    fn points(&self) -> PointIter;
+}
+
+pub trait Contains {
+    fn contains_point(&self, point: (f64, f64)) -> bool;
+}
+
+impl<T> Collidable<T> for T where T: Contains + Points {
+    fn collide(&self, other: &T) -> bool {
+        for point in other.points() {
+            if self.contains_point(point) {
+                return true;
+            }
+        }
+        return false;
+    }
+}
