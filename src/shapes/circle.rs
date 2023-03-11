@@ -57,3 +57,20 @@ impl Points for Circle {
         ].into();
     }
 }
+
+impl FromStr for Circle {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parts: Vec<&str> = s.split(" ").collect();
+        if parts.len() != 3 {
+            return Err(anyhow::anyhow!("Invalid number of parts"));
+        }
+
+        return Ok(Circle {
+            x: parts[0].parse()?,
+            y: parts[1].parse()?,
+            radius: parts[2].parse()?,
+        });
+    }
+}

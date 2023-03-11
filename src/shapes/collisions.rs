@@ -36,13 +36,18 @@ pub trait Contains {
     fn contains_point(&self, point: (f64, f64)) -> bool;
 }
 
-impl<T> Collidable<T> for T where T: Contains + Points {
+impl<T, V> Collidable<T> for V
+    where T: Points,
+    V: Contains
+{
     fn collide(&self, other: &T) -> bool {
         for point in other.points() {
             if self.contains_point(point) {
                 return true;
             }
         }
+
         return false;
     }
 }
+

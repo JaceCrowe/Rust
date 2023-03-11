@@ -558,44 +558,122 @@
 //     y: f64,
 //     radius: f64,
 // }
+// mod shapes;
+
+// use std::f64:consts::PI;
+
+// use crate::shapes::{rect::Rect, circle::Circle, area::Area};
+
+
+// trait Area {
+//     fn area(&self) -> f64;
+// }
+
+// impl Area for Rect {
+//     fn area(&self) -> f64;
+//         retrun self.width * self.height; 
+// }
+// impl Area for Circle {
+//     fn area(&self) -> f64;
+//         retrun self.radius * self.radius * PI; 
+// }
+
+// fn main() {
+//     let circle = Circle {
+//         x: 0f64, y: 0f64,
+//         radius: 4f64,
+//     };
+//     let circle = Circle {
+//         x: 10f64, y: 10f64,
+//         radius: 7f64,
+//     };
+//     let rect1 = Rectangle::default();
+//     let rect2 = Rectangle::default();
+
+
+
+//     println!("{}", rect);
+
+
+//     println!("area: {}", rect.area());
+//     println!("area: {}", circle.area());
+// }
+
+//!\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+//?Final Main File
+//!\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 mod shapes;
 
-use std::f64:consts::PI;
+use std::{str::FromStr, fmt::Display};
 
-use crate::shapes::{rect::Rect, circle::Circle, area::Area};
+use anyhow::Result;
+use shapes::{rect::Rectangle, circle::Circle, collisions::{Points, Contains, Collidable}};
 
-
-trait Area {
-    fn area(&self) -> f64;
+enum Shape {
+    Rect(Rectangle),
+    Circ(Circle),
 }
 
-impl Area for Rect {
-    fn area(&self) -> f64;
-        retrun self.width * self.height; 
+impl FromStr for Shape {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (shape, data) = s.split_once(" ")
+            .ok_or(anyhow::anyhow!("Invalid shape"))?;
+
+        match shape {
+            "circle" => return Ok(Shape::Circ(data.parse()?)),
+            "rect" => return Ok(Shape::Rect(data.parse()?)),
+            _ => return Err(anyhow::anyhow!("Invalid shape"))
+        }
+    }
 }
-impl Area for Circle {
-    fn area(&self) -> f64;
-        retrun self.radius * self.radius * PI; 
+
+impl Points for Shape {
+    fn points(&self) -> shapes::collisions::PointIter {
+        match self {
+            Shape::Rect(rect) => return rect.points(),
+            Shape::Circ(circ) => return circ.points(),
+        }
+    }
 }
 
-fn main() {
-    let circle = Circle {
-        x: 0f64, y: 0f64,
-        radius: 4f64,
-    };
-    let circle = Circle {
-        x: 10f64, y: 10f64,
-        radius: 7f64,
-    };
-    let rect1 = Rectangle::default();
-    let rect2 = Rectangle::default();
+impl Contains for Shape {
+    fn contains_point(&self, point: (f64, f64)) -> bool {
+        match self {
+            Shape::Rect(rect) => return rect.contains_point(point),
+            Shape::Circ(circ) => return circ.contains_point(point),
+        }
+    }
+}
 
+impl Display for Shape {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Shape::Rect(rect) => return write!(f, "{}", rect),
+            Shape::Circ(circ) => return write!(f, "{}", circ),
+        }
+    }
+}
 
+fn main() -> Result<()> {
+    let file = std::fs::read_to_string("shapes")?;
+    let shapes = file
+        .lines()
+        .filter_map(|line| line.parse().ok())
+        .collect::<Vec<Shape>>();
 
-    println!("{}", rect);
+    let collisions: Vec<(&Shape, &Shape)> = shapes
+        .iter()
+        .skip(1)
+        .zip(shapes.iter().take(shapes.len() - 1))
+        .filter(|(a, b)| a.collide(b))
+        .collect();
 
+    for (a, b) in collisions {
+        println!("Collision: {} {}", a, b);
+    }
 
-    println!("area: {}", rect.area());
-    println!("area: {}", circle.area());
+    return Ok(());
 }
 

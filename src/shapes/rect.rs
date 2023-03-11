@@ -160,3 +160,21 @@ impl Contains for Rectangle {
             y >= self.y && y <= self.y + self.height;
     }
 }
+
+impl FromStr for Rectangle {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parts: Vec<&str> = s.split(" ").collect();
+        if parts.len() != 4 {
+            return Err(anyhow::anyhow!("Invalid number of parts"));
+        }
+
+        return Ok(Rectangle {
+            x: parts[0].parse()?,
+            y: parts[1].parse()?,
+            width: parts[2].parse()?,
+            height: parts[3].parse()?,
+        });
+    }
+}
